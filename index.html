@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>随机点名系统</title>
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 3rem auto;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            font-family: 'Segoe UI', system-ui;
+        }
+ 
+        #display {
+            font-size: 4rem;
+            color: #2c3e50;
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            transition: transform 0.3s;
+            border: 2px solid #3498db;
+        }
+ 
+        .rolling {
+            animation: colorShift 1s infinite;
+        }
+ 
+        .buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+ 
+        button {
+            padding: 1.2rem;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+ 
+        #startBtn {
+            background: #3498db;
+            color: white;
+        }
+ 
+        #stopBtn {
+            background: #e74c3c;
+            color: white;
+            display: none;
+        }
+ 
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+ 
+        @keyframes colorShift {
+            0% { color: #2c3e50; }
+            50% { color: #3498db; }
+            100% { color: #2c3e50; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="text-align: center; color: #34495e; margin-bottom: 2rem;">🎯 随机点名系统</h1>
+        <div id="display">准备就绪</div>
+        <div class="buttons">
+            <button id="startBtn" onclick="startRolling()">▶ 开始随机</button>
+            <button id="stopBtn" onclick="stopRolling()">⏹ 停止选择</button>
+        </div>
+    </div>
+ 
+    <script>
+        const students = ["王昭君", "李白", "赵云", "刘备", "张飞", "关雨", "李彤", "小明", "奥特曼"];
+        let timer = null;
+        
+        function updateDisplay() {
+            const display = document.getElementById('display');
+            const randomIndex = Math.floor(Math.random() * students.length);
+            display.textContent = students[randomIndex];
+        }
+ 
+        function startRolling() {
+            document.getElementById('startBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = 'block';
+            document.getElementById('display').classList.add('rolling');
+            timer = setInterval(updateDisplay, 50);
+        }
+ 
+        function stopRolling() {
+            clearInterval(timer);
+            document.getElementById('startBtn').style.display = 'block';
+            document.getElementById('stopBtn').style.display = 'none';
+            document.getElementById('display').classList.remove('rolling');
+        }
+    </script>
+</body>
+</html>
