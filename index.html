@@ -13,7 +13,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             font-family: 'Segoe UI', system-ui;
         }
- 
+
         #display {
             font-size: 4rem;
             color: #2c3e50;
@@ -22,21 +22,42 @@
             padding: 2rem;
             background: white;
             border-radius: 12px;
-            transition: transform 0.3s;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
             border: 2px solid #3498db;
+            opacity: 1;
+            transform: scale(1);
         }
- 
+
+        #display.result-style {
+            animation: resultAppear 0.6s ease-out;
+            color: #e74c3c;
+            font-weight: 700;
+            background: linear-gradient(45deg, #fff9f9, #ffeded);
+            border-color: #e74c3c;
+        }
+
+        @keyframes resultAppear {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
         .rolling {
             animation: colorShift 1s infinite;
         }
- 
+
         .buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
             margin-top: 2rem;
         }
- 
+
         button {
             padding: 1.2rem;
             font-size: 1.1rem;
@@ -45,27 +66,124 @@
             transition: all 0.2s;
             border: 2px solid transparent;
         }
- 
+
         #startBtn {
             background: #3498db;
             color: white;
         }
- 
+
         #stopBtn {
             background: #e74c3c;
             color: white;
             display: none;
         }
- 
+
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
- 
+
         @keyframes colorShift {
             0% { color: #2c3e50; }
             50% { color: #3498db; }
             100% { color: #2c3e50; }
+        }
+
+        .dialog {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+
+        .dialog-content {
+            background: white;
+            margin: 10% auto;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            cursor: pointer;
+        }
+
+        .name-list {
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .name-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f1f3f5;
+            border-radius: 5px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .input-group input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .name-item button {
+            position: relative;
+            overflow: hidden;
+            padding: 5px 10px;
+            background: #e74c3c;
+            color: white;
+        }
+
+        .name-item button::after {
+            content: "删除";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #c0392b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .name-item button:hover::after {
+            opacity: 1;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                margin: 1rem;
+                padding: 1rem;
+            }
+            
+            #display {
+                font-size: 2.5rem;
+                padding: 1rem;
+            }
         }
     </style>
 </head>
@@ -76,31 +194,167 @@
         <div class="buttons">
             <button id="startBtn" onclick="startRolling()">▶ 开始随机</button>
             <button id="stopBtn" onclick="stopRolling()">⏹ 停止选择</button>
+            <button onclick="showManagementDialog()" 
+                    style="grid-column: span 2; background: #2ecc71; margin-top: 15px;">
+                📝 管理名单
+            </button>
         </div>
     </div>
- 
+
+    <!-- 名单管理对话框 -->
+    <div id="dialog" class="dialog">
+        <div class="dialog-content">
+            <span class="close" onclick="closeManagementDialog()">&times;</span>
+            <h3>名单管理（当前人数：<span id="count">0</span>）</h3>
+            <div class="input-group">
+                <input type="text" id="newName" placeholder="输入姓名" onkeypress="handleEnter(event)">
+                <button onclick="addStudent()">添加</button>
+            </div>
+            <div class="input-group">
+                <textarea id="batchImport" placeholder="批量导入（每行一个姓名）" 
+                        style="width:100%; height:100px; padding:8px; border-radius:5px;"></textarea>
+            </div>
+            <button onclick="batchAddStudents()" 
+                    style="margin-bottom:15px; background:#f1c40f; width:100%">
+                📥 批量导入
+            </button>
+            <div id="nameList" class="name-list"></div>
+        </div>
+    </div>
+
     <script>
-        const students = ["付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"];
+        let students = JSON.parse(localStorage.getItem('classmates')) || ["付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"];
         let timer = null;
-        
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshNameList();
+            const lastResult = localStorage.getItem('lastResult');
+            if(lastResult) document.getElementById('display').textContent = lastResult;
+        });
+
+        function showManagementDialog() {
+            document.getElementById('dialog').style.display = 'block';
+            refreshNameList();
+        }
+
+        function closeManagementDialog() {
+            document.getElementById('dialog').style.display = 'none';
+        }
+
+        function handleEnter(e) {
+            if(e.key === 'Enter') addStudent();
+        }
+
+        function addStudent() {
+            const input = document.getElementById('newName');
+            const name = input.value.trim();
+            
+            if (!name) {
+                input.style.borderColor = '#e74c3c';
+                input.placeholder = '姓名不能为空！';
+                input.focus();
+                return;
+            }
+            
+            if (students.includes(name)) {
+                input.value = '';
+                input.style.borderColor = '#e74c3c';
+                input.placeholder = '姓名已存在！';
+                input.focus();
+                return;
+            }
+            
+            students.push(name);
+            localStorage.setItem('classmates', JSON.stringify(students));
+            input.value = '';
+            input.style.borderColor = '#ddd';
+            refreshNameList();
+        }
+
+        function batchAddStudents() {
+            const textarea = document.getElementById('batchImport');
+            const names = textarea.value
+                .split('\n')
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+
+            const duplicates = [];
+            const newStudents = names.filter(name => {
+                if (!students.includes(name)) return true;
+                duplicates.push(name);
+                return false;
+            });
+
+            if (newStudents.length > 0) {
+                students = [...students, ...newStudents];
+                localStorage.setItem('classmates', JSON.stringify(students));
+                refreshNameList();
+            }
+
+            if (duplicates.length > 0) {
+                alert(`跳过重复姓名：${duplicates.join(', ')}`);
+            }
+
+            textarea.value = '';
+        }
+
+        function deleteStudent(index) {
+            if (confirm('确定要删除这个姓名吗？')) {
+                students.splice(index, 1);
+                localStorage.setItem('classmates', JSON.stringify(students));
+                refreshNameList();
+                document.getElementById('display').textContent = '准备就绪';
+            }
+        }
+
+        function refreshNameList() {
+            const container = document.getElementById('nameList');
+            container.innerHTML = students.map((name, index) => `
+                <div class="name-item">
+                    <span>${name}</span>
+                    <button onclick="deleteStudent(${index})">删除</button>
+                </div>
+            `).join('');
+            
+            document.getElementById('count').textContent = students.length;
+        }
+
         function updateDisplay() {
             const display = document.getElementById('display');
             const randomIndex = Math.floor(Math.random() * students.length);
             display.textContent = students[randomIndex];
         }
- 
+
         function startRolling() {
+            if(students.length === 0) {
+                alert('名单为空，请先添加学生！');
+                return;
+            }
             document.getElementById('startBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'block';
-            document.getElementById('display').classList.add('rolling');
+            const display = document.getElementById('display');
+            display.classList.remove('result-style');
+            display.classList.add('rolling');
             timer = setInterval(updateDisplay, 50);
         }
- 
+
         function stopRolling() {
             clearInterval(timer);
+            const display = document.getElementById('display');
+            
+            // 强制重绘以触发动画
+            void display.offsetWidth;
+            
+            display.classList.remove('rolling');
+            display.classList.add('result-style');
+            
             document.getElementById('startBtn').style.display = 'block';
             document.getElementById('stopBtn').style.display = 'none';
-            document.getElementById('display').classList.remove('rolling');
+            localStorage.setItem('lastResult', display.textContent);
+        }
+
+        document.getElementById('dialog').onclick = function(e) {
+            if (e.target === this) closeManagementDialog();
         }
     </script>
 </body>
