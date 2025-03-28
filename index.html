@@ -13,7 +13,7 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             font-family: 'Segoe UI', system-ui;
         }
-
+ 
         #display {
             font-size: 4rem;
             color: #2c3e50;
@@ -22,42 +22,28 @@
             padding: 2rem;
             background: white;
             border-radius: 12px;
-            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            transition: all 0.3s;
             border: 2px solid #3498db;
-            opacity: 1;
-            transform: scale(1);
+            transform-origin: center;
         }
-
+ 
         #display.result-style {
-            animation: resultAppear 0.6s ease-out;
             color: #e74c3c;
-            font-weight: 700;
             background: linear-gradient(45deg, #fff9f9, #ffeded);
             border-color: #e74c3c;
         }
-
-        @keyframes resultAppear {
-            0% {
-                opacity: 0;
-                transform: translateY(20px) scale(0.95);
-            }
-            100% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
+ 
         .rolling {
             animation: colorShift 1s infinite;
         }
-
+ 
         .buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1rem;
             margin-top: 2rem;
         }
-
+ 
         button {
             padding: 1.2rem;
             font-size: 1.1rem;
@@ -66,29 +52,46 @@
             transition: all 0.2s;
             border: 2px solid transparent;
         }
-
+ 
         #startBtn {
             background: #3498db;
             color: white;
         }
-
+ 
         #stopBtn {
             background: #e74c3c;
             color: white;
             display: none;
         }
-
+ 
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
-
+ 
         @keyframes colorShift {
             0% { color: #2c3e50; }
             50% { color: #3498db; }
             100% { color: #2c3e50; }
         }
-
+ 
+        /* 新增弹跳动画 */ 
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(0.95); }
+            75% { transform: scale(1.05); }
+        }
+ 
+        .bounce-animation {
+            animation: bounce 0.6s ease;
+        }
+ 
+        /* 减速动画相关样式 */
+        .decelerating {
+            animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+ 
         .dialog {
             display: none;
             position: fixed;
@@ -99,7 +102,7 @@
             background: rgba(0,0,0,0.5);
             z-index: 1000;
         }
-
+ 
         .dialog-content {
             background: white;
             margin: 10% auto;
@@ -109,7 +112,7 @@
             border-radius: 10px;
             position: relative;
         }
-
+ 
         .close {
             position: absolute;
             right: 20px;
@@ -117,13 +120,13 @@
             font-size: 28px;
             cursor: pointer;
         }
-
+ 
         .name-list {
             margin-top: 15px;
             max-height: 300px;
             overflow-y: auto;
         }
-
+ 
         .name-item {
             display: flex;
             justify-content: space-between;
@@ -133,20 +136,20 @@
             background: #f1f3f5;
             border-radius: 5px;
         }
-
+ 
         .input-group {
             display: flex;
             gap: 10px;
             margin: 15px 0;
         }
-
+ 
         .input-group input {
             flex: 1;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 5px;
         }
-
+ 
         .name-item button {
             position: relative;
             overflow: hidden;
@@ -154,7 +157,7 @@
             background: #e74c3c;
             color: white;
         }
-
+ 
         .name-item button::after {
             content: "删除";
             position: absolute;
@@ -169,11 +172,11 @@
             opacity: 0;
             transition: opacity 0.2s;
         }
-
+ 
         .name-item button:hover::after {
             opacity: 1;
         }
-
+ 
         @media (max-width: 480px) {
             .container {
                 margin: 1rem;
@@ -196,11 +199,11 @@
             <button id="stopBtn" onclick="stopRolling()">⏹ 停止选择</button>
             <button onclick="showManagementDialog()" 
                     style="grid-column: span 2; background: #2ecc71; margin-top: 15px;">
-                📝 管理名单
+                📝 管理名单 
             </button>
         </div>
     </div>
-
+ 
     <!-- 名单管理对话框 -->
     <div id="dialog" class="dialog">
         <div class="dialog-content">
@@ -216,35 +219,37 @@
             </div>
             <button onclick="batchAddStudents()" 
                     style="margin-bottom:15px; background:#f1c40f; width:100%">
-                📥 批量导入
+                📥 批量导入 
             </button>
             <div id="nameList" class="name-list"></div>
         </div>
     </div>
-
+ 
     <script>
         let students = JSON.parse(localStorage.getItem('classmates')) || ["付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"];
         let timer = null;
-
+        let isDecelerating = false;
+ 
+        // 初始化名单显示 
         document.addEventListener('DOMContentLoaded', () => {
             refreshNameList();
             const lastResult = localStorage.getItem('lastResult');
             if(lastResult) document.getElementById('display').textContent = lastResult;
         });
-
+ 
         function showManagementDialog() {
             document.getElementById('dialog').style.display = 'block';
             refreshNameList();
         }
-
+ 
         function closeManagementDialog() {
             document.getElementById('dialog').style.display = 'none';
         }
-
+ 
         function handleEnter(e) {
             if(e.key === 'Enter') addStudent();
         }
-
+ 
         function addStudent() {
             const input = document.getElementById('newName');
             const name = input.value.trim();
@@ -270,34 +275,34 @@
             input.style.borderColor = '#ddd';
             refreshNameList();
         }
-
+ 
         function batchAddStudents() {
             const textarea = document.getElementById('batchImport');
-            const names = textarea.value
+            const names = textarea.value 
                 .split('\n')
                 .map(name => name.trim())
                 .filter(name => name.length > 0);
-
+ 
             const duplicates = [];
             const newStudents = names.filter(name => {
                 if (!students.includes(name)) return true;
                 duplicates.push(name);
                 return false;
             });
-
+ 
             if (newStudents.length > 0) {
                 students = [...students, ...newStudents];
                 localStorage.setItem('classmates', JSON.stringify(students));
                 refreshNameList();
             }
-
+ 
             if (duplicates.length > 0) {
-                alert(`跳过重复姓名：${duplicates.join(', ')}`);
+                alert(`跳过重复姓名：$$${duplicates.join(', ')}`);
             }
-
+ 
             textarea.value = '';
         }
-
+ 
         function deleteStudent(index) {
             if (confirm('确定要删除这个姓名吗？')) {
                 students.splice(index, 1);
@@ -306,25 +311,25 @@
                 document.getElementById('display').textContent = '准备就绪';
             }
         }
-
+ 
         function refreshNameList() {
             const container = document.getElementById('nameList');
             container.innerHTML = students.map((name, index) => `
                 <div class="name-item">
-                    <span>${name}</span>
+                    <span>$${name}</span>
                     <button onclick="deleteStudent(${index})">删除</button>
                 </div>
             `).join('');
             
             document.getElementById('count').textContent = students.length;
         }
-
+ 
         function updateDisplay() {
             const display = document.getElementById('display');
             const randomIndex = Math.floor(Math.random() * students.length);
             display.textContent = students[randomIndex];
         }
-
+ 
         function startRolling() {
             if(students.length === 0) {
                 alert('名单为空，请先添加学生！');
@@ -333,26 +338,56 @@
             document.getElementById('startBtn').style.display = 'none';
             document.getElementById('stopBtn').style.display = 'block';
             const display = document.getElementById('display');
-            display.classList.remove('result-style');
+            display.classList.remove('result-style', 'bounce-animation');
             display.classList.add('rolling');
             timer = setInterval(updateDisplay, 50);
+            isDecelerating = false;
         }
-
+ 
         function stopRolling() {
+            if(isDecelerating) return;
+            isDecelerating = true;
+            
+            // 首先减慢滚动速度 
             clearInterval(timer);
-            const display = document.getElementById('display');
+            let speed = 50;
+            let iterations = 0;
+            const maxIterations = 8;
             
-            // 强制重绘以触发动画
-            void display.offsetWidth;
+            const slowDown = () => {
+                speed += 20;
+                iterations++;
+                
+                if(iterations < maxIterations) {
+                    timer = setTimeout(() => {
+                        updateDisplay();
+                        slowDown();
+                    }, speed);
+                } else {
+                    // 完全停止后执行弹跳动画 
+                    finalizeSelection();
+                }
+            };
             
-            display.classList.remove('rolling');
-            display.classList.add('result-style');
-            
-            document.getElementById('startBtn').style.display = 'block';
-            document.getElementById('stopBtn').style.display = 'none';
-            localStorage.setItem('lastResult', display.textContent);
+            slowDown();
         }
-
+ 
+        function finalizeSelection() {
+            const display = document.getElementById('display');
+            display.classList.remove('rolling');
+            display.classList.add('result-style', 'bounce-animation');
+            
+            localStorage.setItem('lastResult', display.textContent);
+            
+            // 弹跳动画结束后恢复按钮状态 
+            setTimeout(() => {
+                document.getElementById('startBtn').style.display = 'block';
+                document.getElementById('stopBtn').style.display = 'none';
+                isDecelerating = false;
+            }, 600);
+        }
+ 
+        // 点击对话框外区域关闭 
         document.getElementById('dialog').onclick = function(e) {
             if (e.target === this) closeManagementDialog();
         }
