@@ -316,7 +316,7 @@
             const container = document.getElementById('nameList');
             container.innerHTML = students.map((name, index) => `
                 <div class="name-item">
-                    <span>$${name}</span>
+                    <span>${name}</span>
                     <button onclick="deleteStudent(${index})">删除</button>
                 </div>
             `).join('');
