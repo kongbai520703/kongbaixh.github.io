@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>第五代随机点名系统</title>
+    <title>第六代随机点名系统</title>
     <style>
         :root {
             --primary-color: #79C6FB;
@@ -60,7 +60,6 @@
             transition: all 0.3s, color 0.6s ease;
         }
 
-        /* 新增动画样式 */
         .result-effect {
             color: #ff4757 !important;
             text-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
@@ -168,26 +167,46 @@
             50% { transform: scale(1.1); }
         }
 
+        /* 对话框样式 */
         .dialog {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
+            display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-end;
             z-index: 100;
+            background: rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .dialog.active {
+            opacity: 1;
+            visibility: visible;
         }
 
         .dialog-content {
-            background: var(--white);
-            width: 90%;
-            max-width: 500px;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background: rgba(255, 255, 255, 0.96);
+            width: 100%;
+            max-width: 100%;
+            padding: 2rem;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+            backdrop-filter: blur(12px);
+        }
+
+        .dialog.active .dialog-content {
+            transform: translateY(0);
+        }
+
+        .dialog:not(.active) {
+            pointer-events: none;
         }
 
         .name-list {
@@ -203,6 +222,33 @@
             margin: 0.5rem 0;
             background: var(--light-gray);
             border-radius: 5px;
+        }
+
+        .delete-btn {
+            padding: 0.2rem 0.5rem;
+            background: var(--danger-color);
+            border: none;
+            border-radius: 3px;
+            color: white;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .delete-btn:hover {
+            opacity: 0.8;
+        }
+
+        @media (min-width: 600px) {
+            .dialog {
+                align-items: center;
+            }
+            
+            .dialog-content {
+                width: 90%;
+                max-width: 500px;
+                border-radius: 16px;
+                transform: translateY(80px);
+            }
         }
 
         @media (max-width: 600px) {
@@ -221,6 +267,15 @@
             
             #manageBtn {
                 grid-column: span 1;
+            }
+
+            .dialog-content {
+                padding: 1rem;
+            }
+            
+            .name-item {
+                flex-direction: column;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -250,6 +305,7 @@
     </div>
 
     <script>
+        // 初始化数据
         if (!localStorage.getItem('classmates')) {
             localStorage.setItem('classmates', JSON.stringify([
                 "付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"
@@ -271,28 +327,63 @@
 
         function init() {
             updateCount();
-            startBtn.addEventListener('click', startRolling);
-            stopBtn.addEventListener('click', stopRolling);
-            manageBtn.addEventListener('click', () => dialog.style.display = 'flex');
-            addBtn.addEventListener('click', addStudent);
-            batchAddBtn.addEventListener('click', batchAdd);
-            dialog.addEventListener('click', (e) => {
-                if (e.target === dialog) dialog.style.display = 'none';
-            });
-            newName.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') addStudent();
-            });
-            
+            bindEvents();
             refreshList();
         }
 
+        function bindEvents() {
+            startBtn.addEventListener('click', startRolling);
+            stopBtn.addEventListener('click', stopRolling);
+            manageBtn.addEventListener('click', () => dialog.classList.add('active'));
+            addBtn.addEventListener('click', addStudent);
+            batchAddBtn.addEventListener('click', batchAdd);
+            
+            // 对话框关闭逻辑
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) {
+                    closeDialog();
+                }
+            });
+
+            // ESC键支持
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && dialog.classList.contains('active')) {
+                    closeDialog();
+                }
+            });
+
+            newName.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addStudent();
+            });
+        }
+
+        function closeDialog() {
+            dialog.classList.remove('active');
+            newName.value = '';
+            batchImport.value = '';
+            document.activeElement.blur();
+        }
+
         function refreshList() {
-            nameList.innerHTML = students.map((name, i) => `
-                <div class="name-item">
+            // 安全清空现有内容
+            while (nameList.firstChild) {
+                nameList.removeChild(nameList.firstChild);
+            }
+
+            // 使用文档片段优化性能
+            const fragment = document.createDocumentFragment();
+            students.forEach((name, i) => {
+                const div = document.createElement('div');
+                div.className = 'name-item';
+                div.innerHTML = `
                     <span>${name}</span>
-                    <button onclick="deleteStudent(${i})" style="padding:0.2rem 0.5rem;background:var(--danger-color);border:none;border-radius:3px;color:white;cursor:pointer;">删除</button>
-                </div>
-            `).join('');
+                    <button class="delete-btn">删除</button>
+                `;
+                div.querySelector('button').addEventListener('click', () => deleteStudent(i));
+                fragment.appendChild(div);
+            });
+            nameList.appendChild(fragment);
+            updateCount();
         }
 
         function updateCount() {
@@ -307,7 +398,6 @@
             students.push(name);
             localStorage.setItem('classmates', JSON.stringify(students));
             newName.value = '';
-            updateCount();
             refreshList();
         }
 
@@ -320,19 +410,18 @@
             students.push(...added);
             localStorage.setItem('classmates', JSON.stringify(students));
             batchImport.value = '';
-            updateCount();
-            refreshList();
             alert(`添加了${added.length}个新名字，跳过${names.length - added.length}个重复名字`);
+            refreshList();
         }
 
         function deleteStudent(index) {
             if (!confirm('确定删除吗？')) return;
             students.splice(index, 1);
             localStorage.setItem('classmates', JSON.stringify(students));
-            updateCount();
             refreshList();
         }
 
+        let timer = null;
         function startRolling() {
             if (students.length === 0) return alert('名单为空，请先添加学生');
             
@@ -362,16 +451,13 @@
                 display.textContent = selected;
                 localStorage.setItem('lastResult', selected);
 
-                // 应用新动画效果
                 display.classList.remove('rolling');
                 display.classList.add('bounce', 'result-effect', 'border-effect');
 
-                // 重置样式
                 setTimeout(() => {
                     display.classList.remove('border-effect');
                     display.style.border = '2px solid rgba(52, 152, 219, 0.5)';
                     display.style.boxShadow = 'none';
-                    display.style.transform = 'scale(1)';
                 }, 1200);
 
                 startBtn.style.display = 'block';
@@ -383,7 +469,6 @@
             }, delay);
         }
 
-        window.deleteStudent = deleteStudent;
         init();
     </script>
 </body>
