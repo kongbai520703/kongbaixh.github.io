@@ -2,39 +2,62 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>随机点名系统%玄鹤</title>
+    <title>随机点名系统</title>
     <style>
+        :root {
+            --primary-color: #79C6FB;
+            --danger-color: #e74c3c;
+            --success-color: #2ecc71;
+            --warning-color: #79C6FB;
+            --white: #fff;
+            --light-gray: #f8f9fa;
+            --dark-gray: #2c3e50;
+        }
+ 
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+ 
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            transition: background 1s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+ 
         .container {
-            max-width: 600px;
-            margin: 3rem auto;
-            padding: 2rem;
-            background: #f8f9fa;
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.2);
             border-radius: 15px;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            font-family: 'Segoe UI', system-ui;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+ 
+        h1 {
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
  
         #display {
-            font-size: 4rem;
-            color: #2c3e50;
+            font-size: 3.5rem;
             text-align: center;
-            margin: 2rem 0;
             padding: 2rem;
-            background: white;
-            border-radius: 12px;
+            margin: 1.5rem 0;
+            background: rgba(255,255,255,0.85);
+            border-radius: 10px;
+            border: 2px solid rgba(52, 152, 219, 0.5);
             transition: all 0.3s;
-            border: 2px solid #3498db;
-            transform-origin: center;
-        }
- 
-        #display.result-style {
-            color: #e74c3c;
-            background: linear-gradient(45deg, #fff9f9, #ffeded);
-            border-color: #e74c3c;
-        }
- 
-        .rolling {
-            animation: colorShift 1s infinite;
         }
  
         .buttons {
@@ -45,141 +68,87 @@
         }
  
         button {
-            padding: 1.2rem;
-            font-size: 1.1rem;
+            padding: 1rem;
+            font-size: 1rem;
+            border: none;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s;
-            border: 2px solid transparent;
+            color: var(--white);
+            font-weight: 500;
         }
  
-        #startBtn {
-            background: #3498db;
-            color: white;
-        }
- 
-        #stopBtn {
-            background: #e74c3c;
-            color: white;
-            display: none;
+        #startBtn { background: var(--primary-color); }
+        #stopBtn { background: var(--danger-color); display: none; }
+        #manageBtn { 
+            background: var(--success-color); 
+            grid-column: span 2;
+            margin-top: 1rem;
         }
  
         button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+ 
+        .rolling {
+            animation: colorShift 1s infinite;
         }
  
         @keyframes colorShift {
-            0% { color: #2c3e50; }
-            50% { color: #3498db; }
-            100% { color: #2c3e50; }
+            0%, 100% { color: var(--dark-gray); }
+            50% { color: var(--primary-color); }
         }
  
-        /* 新增弹跳动画 */ 
+        .bounce {
+            animation: bounce 0.6s;
+        }
+ 
         @keyframes bounce {
             0%, 100% { transform: scale(1); }
-            25% { transform: scale(1.1); }
-            50% { transform: scale(0.95); }
-            75% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
         }
  
-        .bounce-animation {
-            animation: bounce 0.6s ease;
-        }
- 
-        /* 减速动画相关样式 */
-        .decelerating {
-            animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
-        }
- 
+        /* 对话框样式 */
         .dialog {
-            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.5);
-            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
         }
  
         .dialog-content {
-            background: white;
-            margin: 10% auto;
-            padding: 20px;
+            background: var(--white);
             width: 90%;
             max-width: 500px;
+            padding: 1.5rem;
             border-radius: 10px;
-            position: relative;
-        }
- 
-        .close {
-            position: absolute;
-            right: 20px;
-            top: 15px;
-            font-size: 28px;
-            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
  
         .name-list {
-            margin-top: 15px;
             max-height: 300px;
             overflow-y: auto;
+            margin-top: 1rem;
         }
  
         .name-item {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            margin: 5px 0;
-            background: #f1f3f5;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            background: var(--light-gray);
             border-radius: 5px;
         }
  
-        .input-group {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-        }
- 
-        .input-group input {
-            flex: 1;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
- 
-        .name-item button {
-            position: relative;
-            overflow: hidden;
-            padding: 5px 10px;
-            background: #e74c3c;
-            color: white;
-        }
- 
-        .name-item button::after {
-            content: "删除";
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #c0392b;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
- 
-        .name-item button:hover::after {
-            opacity: 1;
-        }
- 
-        @media (max-width: 480px) {
+        @media (max-width: 600px) {
             .container {
-                margin: 1rem;
                 padding: 1rem;
             }
             
@@ -187,210 +156,175 @@
                 font-size: 2.5rem;
                 padding: 1rem;
             }
+            
+            .buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            #manageBtn {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1 style="text-align: center; color: #34495e; margin-bottom: 2rem;">🎯 随机幸运儿系统</h1>
+        <h1>🎯 随机点名系统</h1>
         <div id="display">准备就绪</div>
         <div class="buttons">
-            <button id="startBtn" onclick="startRolling()">▶ 开始随机</button>
-            <button id="stopBtn" onclick="stopRolling()">⏹ 停止随机</button>
-            <button onclick="showManagementDialog()" 
-                    style="grid-column: span 2; background: #2ecc71; margin-top: 15px;">
-                📝 管理名单 
-            </button>
+            <button id="startBtn">▶开始随机</button>
+            <button id="stopBtn">⏹停止选择</button>
+            <button id="manageBtn">📝管理名单</button>
         </div>
     </div>
  
-    <!-- 名单管理对话框 -->
-    <div id="dialog" class="dialog">
+    <div class="dialog">
         <div class="dialog-content">
-            <span class="close" onclick="closeManagementDialog()">&times;</span>
-            <h3>名单管理（当前人数：<span id="count">0</span>）</h3>
-            <div class="input-group">
-                <input type="text" id="newName" placeholder="输入姓名" onkeypress="handleEnter(event)">
-                <button onclick="addStudent()">添加</button>
+            <h3>名单管理 (<span id="count">0</span>人)</h3>
+            <div style="margin: 1rem 0; display: flex; gap: 0.5rem;">
+                <input type="text" id="newName" placeholder="输入姓名" style="flex:1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                <button id="addBtn" style="padding: 0 1rem; background: var(--primary-color);">添加</button>
             </div>
-            <div class="input-group">
-                <textarea id="batchImport" placeholder="批量导入（每行一个姓名）" 
-                        style="width:100%; height:100px; padding:8px; border-radius:5px;"></textarea>
-            </div>
-            <button onclick="batchAddStudents()" 
-                    style="margin-bottom:15px; background:#f1c40f; width:100%">
-                📥 批量导入 
-            </button>
+            <textarea id="batchImport" placeholder="批量导入（每行一个姓名）" style="width:100%; height:100px; padding:0.5rem; margin-bottom:0.5rem; border:1px solid #ddd; border-radius:5px;"></textarea>
+            <button id="batchAddBtn" style="width:100%; margin-bottom:1rem; background: var(--warning-color);">📥批量导入</button>
             <div id="nameList" class="name-list"></div>
         </div>
     </div>
  
     <script>
-        let students = JSON.parse(localStorage.getItem('classmates')) || ["付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"];
-        let timer = null;
-        let isDecelerating = false;
+        // 数据管理 
+        const students = JSON.parse(localStorage.getItem('classmates')) || [
+            "付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"
+        ];
  
-        // 初始化名单显示 
-        document.addEventListener('DOMContentLoaded', () => {
-            refreshNameList();
-            const lastResult = localStorage.getItem('lastResult');
-            if(lastResult) document.getElementById('display').textContent = lastResult;
-        });
+        // DOM元素 
+        const display = document.getElementById('display');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const manageBtn = document.getElementById('manageBtn');
+        const dialog = document.querySelector('.dialog');
+        const addBtn = document.getElementById('addBtn');
+        const batchAddBtn = document.getElementById('batchAddBtn');
+        const newName = document.getElementById('newName');
+        const batchImport = document.getElementById('batchImport');
+        const nameList = document.getElementById('nameList');
+        const count = document.getElementById('count');
  
-        function showManagementDialog() {
-            document.getElementById('dialog').style.display = 'block';
-            refreshNameList();
+        // 初始化 
+        function init() {
+            updateCount();
+            startBtn.addEventListener('click', startRolling);
+            stopBtn.addEventListener('click', stopRolling);
+            manageBtn.addEventListener('click', () => dialog.style.display = 'flex');
+            addBtn.addEventListener('click', addStudent);
+            batchAddBtn.addEventListener('click', batchAdd);
+            dialog.addEventListener('click', (e) => {
+                if (e.target === dialog) dialog.style.display = 'none';
+            });
+            newName.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addStudent();
+            }); 
+            
+            refreshList();
         }
  
-        function closeManagementDialog() {
-            document.getElementById('dialog').style.display = 'none';
+        // 刷新名单列表 
+        function refreshList() {
+            nameList.innerHTML = students.map((name, i) => `
+                <div class="name-item">
+                    <span>${name}</span>
+                    <button onclick="deleteStudent(${i})" style="padding:0.2rem 0.5rem;background:var(--danger-color);border:none;border-radius:3px;color:white;cursor:pointer;">删除</button>
+                </div>
+            `).join('');
         }
  
-        function handleEnter(e) {
-            if(e.key === 'Enter') addStudent();
+        // 更新人数显示 
+        function updateCount() {
+            count.textContent = students.length;
         }
  
+        // 添加学生 
         function addStudent() {
-            const input = document.getElementById('newName');
-            const name = input.value.trim();
-            
-            if (!name) {
-                input.style.borderColor = '#e74c3c';
-                input.placeholder = '姓名不能为空！';
-                input.focus();
-                return;
-            }
-            
-            if (students.includes(name)) {
-                input.value = '';
-                input.style.borderColor = '#e74c3c';
-                input.placeholder = '姓名已存在！';
-                input.focus();
-                return;
-            }
+            const name = newName.value.trim();
+            if (!name) return alert('请输入姓名');
+            if (students.includes(name)) return alert('姓名已存在');
             
             students.push(name);
             localStorage.setItem('classmates', JSON.stringify(students));
-            input.value = '';
-            input.style.borderColor = '#ddd';
-            refreshNameList();
+            newName.value = '';
+            updateCount();
+            refreshList();
         }
  
-        function batchAddStudents() {
-            const textarea = document.getElementById('batchImport');
-            const names = textarea.value 
-                .split('\n')
-                .map(name => name.trim())
-                .filter(name => name.length > 0);
- 
-            const duplicates = [];
-            const newStudents = names.filter(name => {
-                if (!students.includes(name)) return true;
-                duplicates.push(name);
-                return false;
-            });
- 
-            if (newStudents.length > 0) {
-                students = [...students, ...newStudents];
-                localStorage.setItem('classmates', JSON.stringify(students));
-                refreshNameList();
-            }
- 
-            if (duplicates.length > 0) {
-                alert(`跳过重复姓名：$$${duplicates.join(', ')}`);
-            }
- 
-            textarea.value = '';
+        // 批量添加 
+        function batchAdd() {
+            const names = batchImport.value.split('\n')
+                .map(n => n.trim())
+                .filter(n => n);
+            
+            const added = names.filter(n => !students.includes(n));
+            students.push(...added);
+            localStorage.setItem('classmates', JSON.stringify(students));
+            batchImport.value = '';
+            updateCount();
+            refreshList();
+            alert(`添加了${added.length}个新名字，跳过${names.length - added.length}个重复名字`);
         }
  
+        // 删除学生 
         function deleteStudent(index) {
-            if (confirm('确定要删除这个姓名吗？')) {
-                students.splice(index, 1);
-                localStorage.setItem('classmates', JSON.stringify(students));
-                refreshNameList();
-                document.getElementById('display').textContent = '准备就绪';
-            }
+            if (!confirm('确定删除吗？')) return;
+            students.splice(index, 1);
+            localStorage.setItem('classmates', JSON.stringify(students));
+            updateCount();
+            refreshList();
         }
  
-        function refreshNameList() {
-            const container = document.getElementById('nameList');
-            container.innerHTML = students.map((name, index) => `
-                <div class="name-item">
-                    <span>${name}</span>
-                    <button onclick="deleteStudent(${index})">删除</button>
-                </div>
-            `).join('');
-            
-            document.getElementById('count').textContent = students.length;
-        }
- 
-        function updateDisplay() {
-            const display = document.getElementById('display');
-            const randomIndex = Math.floor(Math.random() * students.length);
-            display.textContent = students[randomIndex];
-        }
- 
+        // 开始随机 
         function startRolling() {
-            if(students.length === 0) {
-                alert('名单为空，请先添加学生！');
-                return;
-            }
-            document.getElementById('startBtn').style.display = 'none';
-            document.getElementById('stopBtn').style.display = 'block';
-            const display = document.getElementById('display');
-            display.classList.remove('result-style', 'bounce-animation');
+            if (students.length === 0) return alert('名单为空，请先添加学生');
+            
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
             display.classList.add('rolling');
-            timer = setInterval(updateDisplay, 50);
-            isDecelerating = false;
+            
+            let interval = 50;
+            timer = setInterval(() => {
+                display.textContent = students[Math.floor(Math.random() * students.length)];
+            }, interval);
         }
  
+        // 停止随机 
         function stopRolling() {
-            if(isDecelerating) return;
-            isDecelerating = true;
-            
-            // 首先减慢滚动速度 
             clearInterval(timer);
-            let speed = 50;
-            let iterations = 0;
-            const maxIterations = 8;
             
-            const slowDown = () => {
-                speed += 20;
-                iterations++;
-                
-                if(iterations < maxIterations) {
-                    timer = setTimeout(() => {
-                        updateDisplay();
-                        slowDown();
-                    }, speed);
-                } else {
-                    // 完全停止后执行弹跳动画 
-                    finalizeSelection();
-                }
-            };
+            // 减速效果 
+            let delay = 100;
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    display.textContent = students[Math.floor(Math.random() * students.length)];
+                }, delay);
+                delay += 100;
+            }
             
-            slowDown();
-        }
- 
-        function finalizeSelection() {
-            const display = document.getElementById('display');
-            display.classList.remove('rolling');
-            display.classList.add('result-style', 'bounce-animation');
-            
-            localStorage.setItem('lastResult', display.textContent);
-            
-            // 弹跳动画结束后恢复按钮状态 
+            // 最终结果 
             setTimeout(() => {
-                document.getElementById('startBtn').style.display = 'block';
-                document.getElementById('stopBtn').style.display = 'none';
-                isDecelerating = false;
-            }, 600);
+                const selected = students[Math.floor(Math.random() * students.length)];
+                display.textContent = selected;
+                localStorage.setItem('lastResult', selected);
+                display.classList.remove('rolling');
+                display.classList.add('bounce');
+                
+                startBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
+                
+                setTimeout(() => display.classList.remove('bounce'), 600);
+            }, delay);
         }
  
-        // 点击对话框外区域关闭 
-        document.getElementById('dialog').onclick = function(e) {
-            if (e.target === this) closeManagementDialog();
-        }
+        // 启动应用 
+        window.deleteStudent = deleteStudent;
+        init();
     </script>
 </body>
 </html>
