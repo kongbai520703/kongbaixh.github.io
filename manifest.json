@@ -1,11 +1,9 @@
 {
-    "name": "离线点名系统",
-    "short_name": "点名系统",
-    "start_url": "/",
-    "display": "standalone",
-    "background_color": "#ff9a9e",
-    "theme_color": "#79C6FB",
-    "description": "支持完全离线的随机点名系统",
-    "icons": []
-
+  "name": "随机点名系统",
+  "short_name": "点名系统",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#79C6FB",
+  "icons": []
 }
