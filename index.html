@@ -69,11 +69,11 @@
             will-change: transform, color;
         }
 
-        /* 蓝色渐变动画 */
+        /* 浅蓝色渐变动画 */
         @keyframes colorShift {
-            0% { color: #2980b9; }
-            50% { color: #3498db; }
-            100% { color: #2980b9; }
+            0% { color: #87CEEB; }
+            50% { color: #ADD8E6; }
+            100% { color: #87CEEB; }
         }
 
         /* 文字缩放动画 */
@@ -89,18 +89,18 @@
         }
 
         /* 红色停止效果 */
-        @keyframes resultScale {
-            0% { 
+        @keyframes redPulse {
+            0% {
                 transform: scale(1);
-                color: var(--white);
+                text-shadow: 0 0 10px rgba(255,0,0,0);
             }
             50% {
-                transform: scale(1.2);
-                color: var(--danger-color);
+                transform: scale(1.15);
+                text-shadow: 0 0 20px rgba(255,69,0,0.6);
             }
             100% {
                 transform: scale(1);
-                color: var(--white);
+                text-shadow: 0 0 10px rgba(255,0,0,0);
             }
         }
 
@@ -111,15 +111,17 @@
 
         .result-effect {
             animation: 
-                resultScale 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55),
+                redPulse 0.8s cubic-bezier(0.4, 0, 0.2, 1),
                 borderGlow 1.2s ease-in-out;
+            color: #ff4444 !important;
         }
 
         .buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            display: flex;
+            justify-content: flex-end;
             gap: 1rem;
             margin-top: 2rem;
+            flex-wrap: wrap;
         }
 
         button {
@@ -150,12 +152,20 @@
             transition: opacity 0.3s;
         }
 
-        #startBtn::before { background: var(--primary-color); }
-        #stopBtn::before { background: var(--danger-color); }
-        #manageBtn::before { background: var(--success-color); }
+        #startBtn {
+            order: 2;
+            margin-left: auto;
+        }
 
-        #stopBtn { display: none; }
-        #manageBtn { grid-column: 1 / -1; }
+        #stopBtn {
+            order: 1;
+            display: none;
+        }
+
+        #manageBtn {
+            order: 3;
+            width: 100%;
+        }
 
         /* 对话框样式 */
         .dialog {
@@ -252,6 +262,19 @@
                 min-height: 90px;
             }
 
+            .buttons {
+                flex-direction: column;
+            }
+
+            #startBtn {
+                order: 1;
+                margin-left: 0;
+            }
+
+            #stopBtn {
+                order: 2;
+            }
+
             .dialog-content {
                 padding: 15px;
                 max-height: calc(100vh - 80px);
@@ -294,8 +317,8 @@
         <h1>🎯 随机点名系统</h1>
         <div id="display">准备就绪</div>
         <div class="buttons">
-            <button id="startBtn">▶开始随机</button>
             <button id="stopBtn">⏹停止选择</button>
+            <button id="startBtn">▶开始随机</button>
             <button id="manageBtn">📝管理名单</button>
         </div>
     </div>
@@ -316,7 +339,6 @@
     <div class="offline-alert" id="offlineAlert">当前处于离线模式</div>
 
     <script>
-        // 初始化数据
         if (!localStorage.getItem('classmates')) {
             localStorage.setItem('classmates', JSON.stringify([
                 "付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"
