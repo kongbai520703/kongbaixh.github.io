@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>离线随机点名系统</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="manifest" href="/manifest.json">
     <style>
-        /* 保持原有所有样式不变 */
         :root {
             --primary-color: #79C6FB;
             --danger-color: #e74c3c;
@@ -19,10 +18,203 @@
             --dark-gray: #2c3e50;
         }
 
-        /* 保持所有原有CSS规则 */
-        /* ... 原有全部样式内容 ... */
-        
-        /* 新增离线提示样式 */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(135deg, #ff9a9e, #fad0c4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+
+        h1 {
+            color: var(--white);
+            text-align: center;
+            margin-bottom: 2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+        }
+
+        #display {
+            font-size: clamp(2rem, 8vw, 3.5rem);
+            text-align: center;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            background: rgba(255,255,255,0.85);
+            border-radius: 10px;
+            border: 2px solid rgba(52, 152, 219, 0.5);
+            transition: all 0.3s;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-effect {
+            color: #ff4757 !important;
+            text-shadow: 0 2px 8px rgba(255, 71, 87, 0.4);
+        }
+
+        @keyframes borderGlow {
+            0%, 100% { border-color: rgba(255, 107, 107, 0.8); }
+            50% { border-color: rgba(255, 71, 87, 1); }
+        }
+
+        .border-effect {
+            animation: borderGlow 1.2s ease-in-out;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        button {
+            padding: 1rem;
+            font-size: 1rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: var(--white);
+            background: rgba(255, 255, 255, 0.25);
+            min-width: 120px;
+            position: relative;
+            overflow: hidden;
+            isolation: isolate;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-color);
+            opacity: 0.8;
+            z-index: -1;
+            transition: opacity 0.3s;
+        }
+
+        #startBtn::before { background: var(--primary-color); }
+        #stopBtn::before { background: var(--danger-color); }
+        #manageBtn::before { background: var(--success-color); }
+
+        #stopBtn { display: none; }
+        #manageBtn { grid-column: 1 / -1; }
+
+        /* 对话框样式 */
+        .dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+            padding: 20px;
+            z-index: 1000;
+        }
+
+        .dialog.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .dialog-content {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        .name-list {
+            flex: 1;
+            overflow-y: auto;
+            margin-top: 1rem;
+            padding-right: 0.5rem;
+        }
+
+        .name-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: var(--light-gray);
+            border-radius: 8px;
+        }
+
+        .delete-btn {
+            padding: 0.4rem 0.8rem;
+            background: var(--danger-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .delete-btn:hover {
+            opacity: 0.8;
+        }
+
+        /* 响应式调整 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+                margin: 10px;
+            }
+
+            #display {
+                padding: 1rem;
+                margin: 1rem 0;
+                min-height: 90px;
+            }
+
+            .dialog-content {
+                padding: 1rem;
+            }
+
+            .name-item {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* 离线提示 */
         .offline-alert {
             position: fixed;
             bottom: 20px;
@@ -33,18 +225,22 @@
             padding: 12px 24px;
             border-radius: 25px;
             display: none;
-            z-index: 999;
-            animation: slideUp 0.5s ease;
+            z-index: 1001;
+            max-width: 90%;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        @keyframes slideUp {
-            from { bottom: -50px; }
-            to { bottom: 20px; }
+        /* iOS输入修复 */
+        @supports (-webkit-touch-callout: none) {
+            input, textarea {
+                font-size: 16px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 原有HTML结构 -->
     <div class="container">
         <h1>🎯 随机点名系统</h1>
         <div id="display">准备就绪</div>
@@ -57,67 +253,196 @@
 
     <div class="dialog">
         <div class="dialog-content">
-            <!-- 原有对话框内容 -->
+            <h3>名单管理 (<span id="count">0</span>人)</h3>
+            <div style="margin: 1rem 0; display: flex; gap: 0.5rem;">
+                <input type="text" id="newName" placeholder="输入姓名" style="flex:1; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                <button id="addBtn" style="padding: 0 1rem;">添加</button>
+            </div>
+            <textarea id="batchImport" placeholder="批量导入（每行一个姓名）" style="width:100%; height:100px; padding:0.5rem; margin-bottom:0.5rem; border:1px solid #ddd; border-radius:5px;"></textarea>
+            <button id="batchAddBtn" style="width:100%; margin-bottom:1rem;">📥批量导入</button>
+            <div id="nameList" class="name-list"></div>
         </div>
     </div>
 
-    <!-- 新增离线提示 -->
     <div class="offline-alert" id="offlineAlert">当前处于离线模式</div>
 
     <script>
-        // 原有数据初始化代码
+        // 初始化数据
         if (!localStorage.getItem('classmates')) {
             localStorage.setItem('classmates', JSON.stringify([
                 "付鑫", "任一祥", "许子豪", "李硕", "崔小天", "任辉", "唐钧", "徐浩", "袁鸿宇", "鲍雨歌", "马嘉亮", "任广兴", "刘新源", "马嘉亮", "贯子旺", "任一鸣", "任昱霖", "魏瑞", "魏聪旭","潘惠云", "王佳怡", "马梦晨", "张涛", "老师", "朱欣毅", "宋宇航", "刘俊阳"
             ]));
         }
 
-        // 原有变量声明
-        const students = JSON.parse(localStorage.getItem('classmates'));
-        // ... 其他变量声明 ...
+        let students = JSON.parse(localStorage.getItem('classmates'));
+        const elements = {
+            display: document.getElementById('display'),
+            startBtn: document.getElementById('startBtn'),
+            stopBtn: document.getElementById('stopBtn'),
+            manageBtn: document.getElementById('manageBtn'),
+            dialog: document.querySelector('.dialog'),
+            addBtn: document.getElementById('addBtn'),
+            batchAddBtn: document.getElementById('batchAddBtn'),
+            newName: document.getElementById('newName'),
+            batchImport: document.getElementById('batchImport'),
+            nameList: document.getElementById('nameList'),
+            count: document.getElementById('count'),
+            offlineAlert: document.getElementById('offlineAlert')
+        };
 
-        // 新增离线状态检测
-        function updateOnlineStatus() {
-            const alert = document.getElementById('offlineAlert');
-            if (!navigator.onLine) {
-                alert.style.display = 'block';
-            } else {
-                alert.style.display = 'none';
-            }
+        // 核心功能
+        function init() {
+            updateCount();
+            bindEvents();
+            refreshList();
+            initServiceWorker();
+            initDB();
+            checkNetworkStatus();
         }
-        window.addEventListener('online', updateOnlineStatus);
-        window.addEventListener('offline', updateOnlineStatus);
-        updateOnlineStatus();
 
-        // 原有功能函数（保持之前修复后的版本）
-        function init() { /* ... */ }
-        function bindEvents() { /* ... */ }
-        function closeDialog() { /* ... */ }
-        function refreshList() { /* ... */ }
-        function updateCount() { /* ... */ }
-        function addStudent() { /* ... */ }
-        function batchAdd() { /* ... */ }
-        function deleteStudent(index) { /* ... */ }
-        function startRolling() { /* ... */ }
-        function stopRolling() { /* ... */ }
+        function bindEvents() {
+            elements.startBtn.addEventListener('click', startRolling);
+            elements.stopBtn.addEventListener('click', stopRolling);
+            elements.manageBtn.addEventListener('click', () => elements.dialog.classList.add('active'));
+            elements.addBtn.addEventListener('click', addStudent);
+            elements.batchAddBtn.addEventListener('click', batchAdd);
+            
+            elements.dialog.addEventListener('click', (e) => {
+                if (e.target === elements.dialog) closeDialog();
+            });
 
-        // ======= 新增PWA相关代码 =======
-        // Service Worker注册
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && elements.dialog.classList.contains('active')) closeDialog();
+            });
+
+            elements.newName.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') addStudent();
+            });
+
+            window.addEventListener('online', checkNetworkStatus);
+            window.addEventListener('offline', checkNetworkStatus);
+        }
+
+        // 数据管理
+        function refreshList() {
+            elements.nameList.innerHTML = '';
+            const fragment = document.createDocumentFragment();
+            
+            students.forEach((name, index) => {
+                const div = document.createElement('div');
+                div.className = 'name-item';
+                div.innerHTML = `
+                    <span>${name}</span>
+                    <button class="delete-btn">删除</button>
+                `;
+                div.querySelector('button').addEventListener('click', () => deleteStudent(index));
+                fragment.appendChild(div);
+            });
+            
+            elements.nameList.appendChild(fragment);
+            updateCount();
+        }
+
+        function updateCount() {
+            elements.count.textContent = students.length;
+        }
+
+        function addStudent() {
+            const name = elements.newName.value.trim();
+            if (!name) return alert('请输入姓名');
+            if (students.includes(name)) return alert('姓名已存在');
+            
+            students.push(name);
+            syncData();
+            elements.newName.value = '';
+            refreshList();
+        }
+
+        function batchAdd() {
+            const names = elements.batchImport.value.split('\n')
+                .map(n => n.trim())
+                .filter(n => n);
+            
+            const added = names.filter(n => !students.includes(n));
+            students.push(...added);
+            syncData();
+            elements.batchImport.value = '';
+            alert(`添加了${added.length}个新名字，跳过${names.length - added.length}个重复名字`);
+            refreshList();
+        }
+
+        function deleteStudent(index) {
+            if (!confirm('确定删除吗？')) return;
+            students.splice(index, 1);
+            syncData();
+            refreshList();
+        }
+
+        function syncData() {
+            localStorage.setItem('classmates', JSON.stringify(students));
+            backupData();
+        }
+
+        // 随机功能
+        let timer = null;
+        function startRolling() {
+            if (students.length === 0) return alert('名单为空，请先添加学生');
+            
+            elements.startBtn.style.display = 'none';
+            elements.stopBtn.style.display = 'block';
+            elements.display.classList.add('rolling');
+            
+            let interval = 50;
+            timer = setInterval(() => {
+                elements.display.textContent = students[Math.floor(Math.random() * students.length)];
+            }, interval);
+        }
+
+        function stopRolling() {
+            clearInterval(timer);
+            
+            let delay = 100;
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    elements.display.textContent = students[Math.floor(Math.random() * students.length)];
+                }, delay);
+                delay += 100;
+            }
+            
+            setTimeout(() => {
+                const selected = students[Math.floor(Math.random() * students.length)];
+                elements.display.textContent = selected;
+                localStorage.setItem('lastResult', selected);
+
+                elements.display.classList.remove('rolling');
+                elements.display.classList.add('bounce', 'result-effect', 'border-effect');
+
+                setTimeout(() => {
+                    elements.display.classList.remove('border-effect');
+                    elements.display.style.border = '2px solid rgba(52, 152, 219, 0.5)';
+                    elements.display.style.boxShadow = 'none';
+                }, 1200);
+
+                elements.startBtn.style.display = 'block';
+                elements.stopBtn.style.display = 'none';
+                
+                setTimeout(() => {
+                    elements.display.classList.remove('bounce', 'result-effect');
+                }, 1000);
+            }, delay);
+        }
+
+        // 离线功能
+        function initServiceWorker() {
+            if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
-                        console.log('ServiceWorker注册成功:', registration.scope);
-                        // 自动检查更新
                         registration.update();
-                    })
-                    .catch(err => {
-                        console.log('ServiceWorker注册失败:', err);
+                        setInterval(() => registration.update(), 3600000);
                     });
-            });
+            }
         }
 
-        // 数据持久化
         let db;
         function initDB() {
             const request = indexedDB.open('RollcallDB', 1);
@@ -131,20 +456,8 @@
 
             request.onsuccess = () => {
                 db = request.result;
-                // 恢复备份数据
-                const transaction = db.transaction(['backup'], 'readonly');
-                const store = transaction.objectStore('backup');
-                store.get(1).onsuccess = (e) => {
-                    const data = e.target.result;
-                    if (data) {
-                        localStorage.setItem('classmates', data.classmates);
-                        localStorage.setItem('lastResult', data.lastResult);
-                        students = JSON.parse(data.classmates);
-                        refreshList();
-                    }
-                };
-                // 启动定时备份
                 setInterval(backupData, 300000);
+                restoreData();
             };
         }
 
@@ -162,9 +475,34 @@
             store.put(data);
         }
 
+        function restoreData() {
+            const transaction = db.transaction(['backup'], 'readonly');
+            const store = transaction.objectStore('backup');
+            store.get(1).onsuccess = (e) => {
+                const data = e.target.result;
+                if (data) {
+                    localStorage.setItem('classmates', data.classmates);
+                    localStorage.setItem('lastResult', data.lastResult);
+                    students = JSON.parse(data.classmates);
+                    refreshList();
+                }
+            };
+        }
+
+        function checkNetworkStatus() {
+            elements.offlineAlert.style.display = navigator.onLine ? 'none' : 'block';
+        }
+
+        // 工具函数
+        function closeDialog() {
+            elements.dialog.classList.remove('active');
+            elements.newName.value = '';
+            elements.batchImport.value = '';
+            document.activeElement.blur();
+        }
+
         // 初始化
         init();
-        initDB();
     </script>
 </body>
 </html>
