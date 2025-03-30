@@ -63,7 +63,6 @@
             transition: all 0.3s;
         }
 
-        /* 动态效果 */
         .result-effect { color: #ff4757; text-shadow: 0 2px 8px rgba(255, 71, 87, 0.4); }
         .border-effect { animation: borderGlow 1.2s ease-in-out; }
         .rolling { animation: colorShift 1s infinite; }
@@ -84,7 +83,6 @@
             50% { transform: scale(1.1); }
         }
 
-        /* 对话框系统 */
         .dialog {
             position: fixed;
             top: 0;
@@ -130,29 +128,24 @@
             opacity: 0;
         }
 
-        /* 移动端适配 */
         @media (max-width: 600px) {
             .container { padding: 1rem; }
             #display { font-size: 2.5rem; }
-
             .dialog {
                 align-items: flex-end;
                 padding: 10px;
             }
-            
             .dialog-content {
                 width: 100%;
                 max-width: 100%;
                 border-radius: 16px 16px 0 0;
                 transform: translateY(100%);
             }
-            
             .dialog.active .dialog-content {
                 transform: translateY(0);
             }
         }
 
-        /* 控制按钮 */
         .buttons {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -172,6 +165,7 @@
             background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(8px);
             overflow: hidden;
+            touch-action: manipulation; /* 解决移动端点击延迟 */
         }
 
         button::before {
@@ -194,7 +188,6 @@
         button:hover { transform: translateY(-3px); }
         button:active { transform: translateY(1px); }
 
-        /* 名单管理 */
         .input-group {
             display: flex;
             gap: 10px;
@@ -242,7 +235,6 @@
 
         .delete-btn:hover { opacity: 0.9; }
 
-        /* 离线提示 */
         #offlineStatus {
             position: fixed;
             top: 10px;
@@ -284,7 +276,7 @@
     </div>
 
     <script>
-        // 离线功能
+        // 离线状态检测
         function updateOnlineStatus() {
             document.getElementById('offlineStatus').style.display = 
                 navigator.onLine ? 'none' : 'block';
@@ -293,7 +285,7 @@
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
 
-        // Service Worker
+        // Service Worker注册
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
                 .then(reg => console.log('Service Worker 已注册'))
@@ -302,7 +294,7 @@
 
         // 应用核心
         const app = {
-            students: JSON.parse(localStorage.getItem('classmates') || [],
+            students: JSON.parse(localStorage.getItem('classmates') || '[]'),
             timer: null,
             
             init() {
@@ -320,24 +312,43 @@
 
             bindEvents() {
                 const dom = this.getDOM();
-                dom.startBtn.addEventListener('click', () => this.startRolling());
-                dom.stopBtn.addEventListener('click', () => this.stopRolling());
-                dom.manageBtn.addEventListener('click', () => this.toggleDialog(true));
-                dom.addBtn.addEventListener('click', () => this.addStudent());
-                dom.batchAddBtn.addEventListener('click', () => this.batchAdd());
                 
+                // 按钮事件绑定
+                dom.startBtn?.addEventListener('click', () => this.startRolling());
+                dom.stopBtn?.addEventListener('click', () => this.stopRolling());
+                dom.manageBtn?.addEventListener('click', () => this.toggleDialog(true));
+                dom.addBtn?.addEventListener('click', () => this.addStudent());
+                dom.batchAddBtn?.addEventListener('click', () => this.batchAdd());
+
+                // 全局点击事件
                 document.addEventListener('click', (e) => {
-                    if (e.target.closest('.dialog') === dom.dialog && e.target === dom.dialog) {
+                    const target = e.target;
+                    
+                    // 删除按钮处理
+                    if (target.classList.contains('delete-btn')) {
+                        const index = target.dataset.index;
+                        if (confirm('确定删除该学生吗？')) {
+                            this.students.splice(index, 1);
+                            this.saveData();
+                            this.refreshList();
+                        }
+                        return;
+                    }
+
+                    // 对话框外部点击关闭
+                    if (target === dom.dialog) {
                         this.toggleDialog(false);
                     }
                 });
 
-                dom.newName.addEventListener('keypress', (e) => {
+                // 输入框回车事件
+                dom.newName?.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.addStudent();
                 });
 
+                // ESC键关闭对话框
                 document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape' && dom.dialog.classList.contains('active')) {
+                    if (e.key === 'Escape' && dom.dialog?.classList.contains('active')) {
                         this.toggleDialog(false);
                     }
                 });
@@ -359,7 +370,7 @@
 
             toggleDialog(show) {
                 const dom = this.getDOM();
-                dom.dialog.classList.toggle('active', show);
+                dom.dialog?.classList.toggle('active', show);
                 if (!show) {
                     dom.newName.value = '';
                     dom.batchImport.value = '';
@@ -368,6 +379,8 @@
 
             refreshList() {
                 const dom = this.getDOM();
+                if (!dom.nameList) return;
+
                 dom.nameList.innerHTML = this.students.map((name, index) => `
                     <div class="name-item">
                         <span>${name}</span>
@@ -376,22 +389,11 @@
                 `).join('');
                 
                 dom.count.textContent = this.students.length;
-                
-                document.querySelectorAll('.delete-btn').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        const index = e.target.dataset.index;
-                        if (confirm('确定删除该学生吗？')) {
-                            this.students.splice(index, 1);
-                            this.saveData();
-                            this.refreshList();
-                        }
-                    });
-                });
             },
 
             addStudent() {
                 const dom = this.getDOM();
-                const name = dom.newName.value.trim();
+                const name = dom.newName?.value.trim();
                 if (!name) return alert('请输入有效姓名');
                 if (this.students.includes(name)) return alert('该姓名已存在');
                 
@@ -403,9 +405,9 @@
 
             batchAdd() {
                 const dom = this.getDOM();
-                const names = dom.batchImport.value.split('\n')
+                const names = dom.batchImport?.value.split('\n')
                     .map(n => n.trim())
-                    .filter(n => n);
+                    .filter(n => n) || [];
                 
                 const newNames = names.filter(n => !this.students.includes(n));
                 this.students.push(...newNames);
@@ -421,17 +423,20 @@
             },
 
             startRolling() {
-                if (this.students.length === 0) return alert('请先添加学生名单');
-                const dom = this.getDOM();
+                if (this.students.length === 0) {
+                    alert('请先添加学生名单');
+                    this.toggleDialog(true);
+                    return;
+                }
                 
+                const dom = this.getDOM();
                 dom.startBtn.style.display = 'none';
                 dom.stopBtn.style.display = 'block';
                 dom.display.classList.add('rolling');
 
-                let interval = 50;
                 this.timer = setInterval(() => {
                     dom.display.textContent = this.getRandomStudent();
-                }, interval);
+                }, 50);
             },
 
             stopRolling() {
@@ -466,7 +471,9 @@
         };
 
         // 初始化应用
-        app.init();
+        document.addEventListener('DOMContentLoaded', () => {
+            app.init();
+        });
     </script>
 </body>
 </html>
